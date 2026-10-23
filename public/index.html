@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>2GIS Parser Mini App</title>
+
+  <!-- PWA & Mobile Capable Meta -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="2GIS Parser" />
+  <link rel="apple-touch-icon" href="/icon.png" />
+  <link rel="icon" type="image/png" href="/icon.png" />
+
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #16a34a;
+      --accent-hover: #15803d;
+      --secondary: #2563eb;
+      --danger: #ef4444;
+      --radius: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      padding: env(safe-area-inset-top, 12px) 14px calc(env(safe-area-inset-bottom, 16px) + 74px) 14px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+
+    .container {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 4px;
+      margin-bottom: 10px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header img {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+    }
+    .header h1 {
+      font-size: 19px;
+      margin: 0;
+      font-weight: 700;
+    }
+    .header p {
+      margin: 2px 0 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .badge {
+      background: rgba(22, 163, 74, 0.2);
+      color: #4ade80;
+      border: 1px solid rgba(74, 222, 128, 0.3);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+    }
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select,
+    textarea {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: none;
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #fff;
+      background: var(--accent);
+      transition: opacity 0.15s, transform 0.08s;
+      width: 100%;
+      text-decoration: none;
+    }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn-secondary {
+      background: #334155;
+      color: var(--text);
+    }
+    .btn-blue {
+      background: var(--secondary);
+    }
+    .btn-sm {
+      padding: 7px 10px;
+      font-size: 12px;
+      width: auto;
+    }
+
+    /* Cities list */
+    .cities-box {
+      max-height: 220px;
+      overflow-y: auto;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    .city-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 6px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.45);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .city-item:last-child {
+      border-bottom: none;
+    }
+    .city-item input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      margin: 0;
+    }
+
+    /* Tabs */
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 8px calc(env(safe-area-inset-bottom, 8px) + 6px) 8px;
+      z-index: 100;
+    }
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      flex: 1;
+    }
+    .nav-btn.active {
+      color: #4ade80;
+    }
+
+    /* URLs Result Box */
+    .url-item {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      font-size: 12px;
+      word-break: break-all;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .step-list {
+      padding-left: 18px;
+      margin: 8px 0;
+      font-size: 13.5px;
+      color: #cbd5e1;
+    }
+    .step-list li {
+      margin-bottom: 8px;
+    }
+    code {
+      background: #0f172a;
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: #38bdf8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-left">
+        <img src="/icon.png" alt="2GIS" />
+        <div>
+          <h1>2GIS Parser Mini App</h1>
+          <p>Генератор ссылок и сбор без API (Chrome CLI)</p>
+        </div>
+      </div>
+      <span class="badge">PWA</span>
+    </div>
+
+    <!-- ВКЛАДКА 1: ГЕНЕРАТОР ССЫЛОК -->
+    <div id="tab-generator" class="tab-content active">
+      <div class="card">
+        <div class="card-title">
+          <span>1. Параметры поиска 2ГИС</span>
+        </div>
+
+        <label for="countrySelect">Страна</label>
+        <select id="countrySelect"></select>
+
+        <label for="rubricSearch">Рубрика (1786 категорий из базы)</label>
+        <input type="text" id="rubricSearch" placeholder="Начни вводить рубрику (например: Автосервис, Кофе...)" />
+        <select id="rubricSelect">
+          <option value="">Без рубрики (свободный запрос)</option>
+        </select>
+
+        <label for="queryInput">Поисковый запрос</label>
+        <input type="text" id="queryInput" placeholder="Например: ремонт кофемашин или автосервис" />
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>2. Выбор городов (<span id="selectedCount">0</span> выбрано)</span>
+          <div class="row">
+            <button class="btn btn-secondary btn-sm" id="btnSelectAll">Все</button>
+            <button class="btn btn-secondary btn-sm" id="btnDeselectAll">Сброс</button>
+          </div>
+        </div>
+
+        <input type="text" id="cityFilter" placeholder="Быстрый поиск города (например: Нижний Тагил)..." />
+        <div class="cities-box" id="citiesContainer">Загрузка базы городов...</div>
+
+        <button class="btn" id="btnGenerate">Сгенерировать ссылки 2ГИС</button>
+      </div>
+
+      <div class="card" id="resultCard" style="display: none;">
+        <div class="card-title">
+          <span>Готовые ссылки (<span id="urlsCount">0</span>)</span>
+          <button class="btn btn-blue btn-sm" id="btnCopyAll">Скопировать все</button>
+        </div>
+        <textarea id="urlsTextarea" rows="4" readonly></textarea>
+        <div id="urlsList"></div>
+      </div>
+    </div>
+
+    <!-- ВКЛАДКА 2: ЗАПУСК ПАРСЕРА БЕЗ API -->
+    <div id="tab-runner" class="tab-content">
+      <div class="card">
+        <div class="card-title">Запуск оригинального парсера (Без API)</div>
+        <p style="font-size: 13px; color: var(--muted); margin-top: 0;">
+          Так как Vercel не запускает браузер Chrome напрямую, полный сбор карточек <code>parser-2gis.py</code> выполняется на бесплатном сервере <b>GitHub Actions</b> (2000 бесплатных минут в месяц, без токенов и API).
+        </p>
+
+        <label for="ghRepoInput">Твой GitHub репозиторий (логин/репозиторий)</label>
+        <input type="text" id="ghRepoInput" value="tokarboss/2gis-parser-pwa" placeholder="tokarboss/2gis-parser-pwa" />
+
+        <label for="cliFormat">Формат готового файла</label>
+        <select id="cliFormat">
+          <option value="xlsx">Excel таблица (.xlsx)</option>
+          <option value="csv">CSV таблица (.csv)</option>
+          <option value="json">JSON документ (.json)</option>
+        </select>
+
+        <label for="cliCommand">Готовая CLI-команда (для ПК или сервера)</label>
+        <textarea id="cliCommand" rows="3" readonly></textarea>
+
+        <div class="row" style="margin-bottom: 10px;">
+          <button class="btn btn-secondary" id="btnCopyCli">Скопировать команду</button>
+          <button class="btn btn-blue" id="btnOpenActions">Открыть GitHub Actions</button>
+        </div>
+
+        <ol class="step-list">
+          <li>Скопируй сгенерированные ссылки на первой вкладке.</li>
+          <li>Нажми <b>«Открыть GitHub Actions»</b> (откроется вкладка <i>Run 2GIS Parser</i>).</li>
+          <li>Нажми кнопку <b>Run workflow</b>, вставь ссылки и выбери <code>xlsx</code> или <code>csv</code>.</li>
+          <li>Через 1–3 минуты скачай готовый Excel-файл прямо в телефон в блоке <b>Artifacts</b>!</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ВКЛАДКА 3: УСТАНОВКА НА ЭКРАН -->
+    <div id="tab-install" class="tab-content">
+      <div class="card">
+        <div class="card-title">Установка иконки на главный экран</div>
+        <button class="btn" id="btnInstallPwa" style="display: none; margin-bottom: 12px;">
+          Установить на главный экран (Android)
+        </button>
+
+        <p style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px;">На iPhone (iOS Safari):</p>
+        <ol class="step-list">
+          <li>Открой эту ссылку на Vercel в браузере <b>Safari</b>.</li>
+          <li>Нажми кнопку <b>«Поделиться»</b> (квадрат со стрелкой вверх внизу экрана).</li>
+          <li>Прокрути меню вниз и выбери <b>«На экран „Домой“»</b> (Add to Home Screen).</li>
+          <li>Нажми <b>«Добавить»</b> — на рабочем столе появится фирменная иконка 2GIS Parser во весь экран.</li>
+        </ol>
+
+        <p style="font-size: 13.5px; font-weight: 600; margin-bottom: 4px; margin-top: 14px;">На Android (Chrome):</p>
+        <ol class="step-list">
+          <li>Нажми на три точки в правом верхнем углу браузера Chrome.</li>
+          <li>Выбери <b>«Установить приложение»</b> или <b>«Добавить на главный экран»</b>.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Нижнее меню -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-tab="tab-generator">
+      <span>🔍 Генератор</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-runner">
+      <span>🚀 Парсинг (Chrome)</span>
+    </button>
+    <button class="nav-btn" data-tab="tab-install">
+      <span>📲 На экран</span>
+    </button>
+  </nav>
+
+  <script>
+    const COUNTRY_NAMES = {
+      ru: 'Россия', kz: 'Казахстан', by: 'Беларусь', uz: 'Узбекистан',
+      kg: 'Киргизия', az: 'Азербайджан', ae: 'ОАЭ', cz: 'Чехия',
+      cy: 'Кипр', eg: 'Египет', it: 'Италия', cl: 'Чили',
+      sa: 'Саудовская Аравия', qa: 'Катар', om: 'Оман', kw: 'Кувейт', bh: 'Бахрейн', iq: 'Ирак'
+    };
+
+    let allCities = [];
+    let allRubrics = [];
+    let selectedCities = new Set();
+
+    // Точный порт функции url_query_encode из parser_2gis/gui/utils.py
+    function urlQueryEncode(str) {
+      let out = '';
+      for (let i = 0; i < str.length; i++) {
+        const ch = str[i];
+        const code = ch.toLowerCase().charCodeAt(0);
+        if ((code >= 1072 && code <= 1103) || code === 1105 || code === 32) {
+          out += ch;
+        } else {
+          out += encodeURIComponent(ch);
+        }
+      }
+      return out;
+    }
+
+    async function initApp() {
+      try {
+        const [citiesRes, rubricsRes] = await Promise.all([
+          fetch('/data/cities.json'),
+          fetch('/data/rubrics.json')
+        ]);
+        allCities = await citiesRes.json();
+        const rubricsObj = await rubricsRes.json();
+
+        allRubrics = Object.values(rubricsObj)
+          .filter(r => r && r.label && r.label !== 'Без рубрики')
+          .sort((a, b) => a.label.localeCompare(b.label, 'ru'));
+
+        populateCountries();
+        populateRubrics('');
+        renderCities();
+      } catch (e) {
+        document.getElementById('citiesContainer').innerText = 'Ошибка загрузки базы: ' + e.message;
+      }
+    }
+
+    function populateCountries() {
+      const countrySelect = document.getElementById('countrySelect');
+      const codes = [...new Set(allCities.map(c => c.country_code))];
+      codes.sort((a, b) => (COUNTRY_NAMES[a] || a).localeCompare(COUNTRY_NAMES[b] || b, 'ru'));
+
+      countrySelect.innerHTML = '';
+      codes.forEach(code => {
+        const opt = document.createElement('option');
+        opt.value = code;
+        opt.textContent = COUNTRY_NAMES[code] || code.toUpperCase();
+        if (code === 'ru') opt.selected = true;
+        countrySelect.appendChild(opt);
+      });
+    }
+
+    function populateRubrics(filterText) {
+      const rubricSelect = document.getElementById('rubricSelect');
+      const q = filterText.trim().toLowerCase();
+      const filtered = q
+        ? allRubrics.filter(r => r.label.toLowerCase().includes(q)).slice(0, 150)
+        : allRubrics.slice(0, 150);
+
+      rubricSelect.innerHTML = '<option value="">Без рубрики (по текстовому запросу)</option>';
+      filtered.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.code;
+        opt.dataset.label = r.label;
+        opt.textContent = r.label;
+        rubricSelect.appendChild(opt);
+      });
+    }
+
+    function renderCities() {
+      const container = document.getElementById('citiesContainer');
+      const country = document.getElementById('countrySelect').value;
+      const filter = document.getElementById('cityFilter').value.trim().toLowerCase();
+
+      const cities = allCities
+        .filter(c => c.country_code === country && (!filter || c.name.toLowerCase().includes(filter)))
+        .sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+
+      container.innerHTML = '';
+      cities.forEach(city => {
+        const row = document.createElement('label');
+        row.className = 'city-item';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = selectedCities.has(city.code);
+        cb.addEventListener('change', () => {
+          if (cb.checked) selectedCities.add(city.code);
+          else selectedCities.delete(city.code);
+          updateSelectedCount();
+        });
+        const span = document.createElement('span');
+        span.textContent = city.name;
+        row.appendChild(cb);
+        row.appendChild(span);
+        container.appendChild(row);
+      });
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      document.getElementById('selectedCount').textContent = selectedCities.size;
+    }
+
+    function generateUrls() {
+      const query = document.getElementById('queryInput').value.trim();
+      const rubricSelect = document.getElementById('rubricSelect');
+      const rubricCode = rubricSelect.value;
+
+      if (!query) {
+        alert('Введите поисковый запрос или выберите рубрику!');
+        return;
+      }
+      if (selectedCities.size === 0) {
+        alert('Выберите хотя бы один город!');
+        return;
+      }
+
+      const urls = [];
+      allCities.forEach(city => {
+        if (selectedCities.has(city.code)) {
+          let url = `https://2gis.${city.domain}/${city.code}/search/${urlQueryEncode(query)}`;
+          if (rubricCode) {
+            url += `/rubricId/${rubricCode}`;
+          }
+          url += '/filters/sort=name';
+          urls.push({ city: city.name, url });
+        }
+      });
+
+      const rawUrls = urls.map(u => u.url);
+      document.getElementById('resultCard').style.display = 'block';
+      document.getElementById('urlsCount').textContent = rawUrls.length;
+      document.getElementById('urlsTextarea').value = rawUrls.join('\n');
+
+      const fmt = document.getElementById('cliFormat').value;
+      const quotedUrls = rawUrls.map(u => `"${u}"`).join(' ');
+      document.getElementById('cliCommand').value = `python parser-2gis.py -i ${quotedUrls} -o result.${fmt} -f ${fmt} --chrome.headless yes`;
+
+      const listEl = document.getElementById('urlsList');
+      listEl.innerHTML = '';
+      urls.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'url-item';
+        div.innerHTML = `<span><b>${item.city}:</b> ${item.url}</span><a href="${item.url}" target="_blank" class="btn btn-secondary btn-sm">Открыть</a>`;
+        listEl.appendChild(div);
+      });
+    }
+
+    // События
+    document.getElementById('countrySelect').addEventListener('change', () => {
+      selectedCities.clear();
+      renderCities();
+    });
+    document.getElementById('cityFilter').addEventListener('input', renderCities);
+    document.getElementById('rubricSearch').addEventListener('input', (e) => populateRubrics(e.target.value));
+    document.getElementById('rubricSelect').addEventListener('change', (e) => {
+      const opt = e.target.selectedOptions[0];
+      if (opt && opt.dataset.label) {
+        document.getElementById('queryInput').value = opt.dataset.label;
+      }
+    });
+
+    document.getElementById('btnSelectAll').addEventListener('click', () => {
+      const country = document.getElementById('countrySelect').value;
+      const filter = document.getElementById('cityFilter').value.trim().toLowerCase();
+      allCities.forEach(c => {
+        if (c.country_code === country && (!filter || c.name.toLowerCase().includes(filter))) {
+          selectedCities.add(c.code);
+        }
+      });
+      renderCities();
+    });
+
+    document.getElementById('btnDeselectAll').addEventListener('click', () => {
+      selectedCities.clear();
+      renderCities();
+    });
+
+    document.getElementById('btnGenerate').addEventListener('click', generateUrls);
+
+    document.getElementById('btnCopyAll').addEventListener('click', () => {
+      const text = document.getElementById('urlsTextarea').value;
+      navigator.clipboard.writeText(text);
+      alert('Ссылки скопированы в буфер обмена!');
+    });
+
+    document.getElementById('btnCopyCli').addEventListener('click', () => {
+      const text = document.getElementById('cliCommand').value;
+      navigator.clipboard.writeText(text);
+      alert('Команда скопирована!');
+    });
+
+    document.getElementById('btnOpenActions').addEventListener('click', () => {
+      const repo = document.getElementById('ghRepoInput').value.trim() || 'tokarboss/2gis-parser-pwa';
+      window.open(`https://github.com/${repo}/actions/workflows/parse_2gis.yml`, '_blank');
+    });
+
+    // Переключение вкладок
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Регистрация Service Worker и кнопка установки PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installBtn = document.getElementById('btnInstallPwa');
+      installBtn.style.display = 'inline-flex';
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          await deferredPrompt.userChoice;
+          deferredPrompt = null;
+        }
+      });
+    });
+
+    initApp();
+  </script>
+</body>
+</html>
